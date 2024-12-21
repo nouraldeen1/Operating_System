@@ -15,7 +15,7 @@ struct process_input_data
     int arrivalTime;
     int runTime;
     int priority;
-    // int mem;nooooooooo
+    int mem;
     // int dum; noooooo
     // int dum2;noooooooo
     //  int dum3;noooooooooo
@@ -36,11 +36,11 @@ struct PCB
     int startTime;
     int endTime;
     int stoppedTime;
+    int memory;
     // int start;
     // int waitingst;
     // int runningst;
     //// int stoppedst;
-    // int memory;
 
     // int startmem;
     // int endmem;
@@ -62,7 +62,7 @@ struct PCB
 //     pcb->stoppedTime = stoppedTime;
 // }
 
-void setPCB(struct PCB *pcb, int id, int arrivalTime, int runTime, int priority, int waitingTime, int remainingTime, int startTime, int endTime, int stoppedTime)
+void setPCB(struct PCB *pcb, int id, int arrivalTime, int runTime, int priority, int waitingTime, int remainingTime, int startTime, int endTime, int stoppedTime,int memory)
 {
     pcb->id = id;
     pcb->arrivalTime = arrivalTime;
@@ -73,6 +73,7 @@ void setPCB(struct PCB *pcb, int id, int arrivalTime, int runTime, int priority,
     pcb->startTime = startTime;
     pcb->endTime = endTime;
     pcb->stoppedTime = stoppedTime;
+    pcb->memory=memory;
 }
 
 /***************************

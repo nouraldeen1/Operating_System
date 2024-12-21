@@ -48,17 +48,21 @@ int main(int argc, char *argv[])
     if (algorithm_type == 3)
     {
         round_robin(Quantum);
+        printf("round_robin \n");
     }
     else if (algorithm_type == 4)
     {
+        printf("multilevel \n");
         multilevel(Quantum);
     }
     else if (algorithm_type == 1)
     {
+        printf("sjf \n");
         SJF();
     }
     else
         HPF();
+        printf("hpv \n");
 
     file = fopen("scheduler.perf", "w");
 
@@ -145,7 +149,7 @@ struct PCB *generate_process()
 
     if (recieved == -1 || lastid == msgprocess.id)
     {
-        // printf("Error in receiving schedular\n");
+        //printf("Error in receiving schedular\n");
         return NULL;
     }
     else
@@ -163,8 +167,9 @@ struct PCB *generate_process()
         newpcb->startTime = -1;
         newpcb->stoppedTime = -1;
         newpcb->state = "";
+        newpcb->memory=msgprocess.mem;
         // printing the process data at getclk()
-        printf("at time %d process %d arrives with arrival %d\n", getClk(), newpcb->id, newpcb->arrivalTime);
+        printf("at time %d process %d arrives with arrival %d memeory %d \n", getClk(), newpcb->id, newpcb->arrivalTime,newpcb->memory);
         // int obj=getClk();
         // while(obj==getClk());
         return newpcb;
@@ -323,6 +328,7 @@ void forking(struct PCB *process)
     int pid;
     if (process != NULL)
     {
+
         pid = fork();
 
         if (pid == -1)
@@ -478,13 +484,13 @@ void multilevel(int Q)
                         current_process->waitingTime = current_process->waitingTime + getClk() - current_process->stoppedTime;
                         current_process->startTime = getClk();
                         current_process->state = "started";
-                        fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime);
+                        fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime,current_process->memory);
                     }
                     else if (count_Q == 0 && current_process->startTime != -1)
                     {
                         current_process->waitingTime = current_process->waitingTime + getClk() - current_process->stoppedTime;
                         current_process->state = "resumed";
-                        fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime);
+                        fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime,current_process->memory);
                     }
                     kill(current_process->pid, SIGCONT);
                     // printf("i arrivied at level %d \n", i);
@@ -517,7 +523,8 @@ void multilevel(int Q)
                     float WTA = (float)TA / current_process->runTime;
                     AvgWTA += WTA;
                     Avg_waiting += current_process->waitingTime;
-                    fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tTA\t%d\tWTA\t%f\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime, TA, WTA);
+                    printf("hi");
+                    fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\tTA\t%d\tWTA\t%f\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime,current_process->memory, TA, WTA);
                     current_process = NULL;
                     if (i > current_level)
                     {
@@ -557,7 +564,8 @@ void SJF()
     // int process_during_wait = 0;
     int pid, status;
     // int count_Q = 0;
-    file = fopen("scheduler.log", "a");
+
+    file = fopen("scheduler.log", "w");
     if (file == NULL)
     {
         printf("Error opening file!\n");
@@ -565,7 +573,7 @@ void SJF()
     }
     while (Finished_Process != process_count || !finished || processes_terminated != process_count)
     {
-        // printf("start again\n");
+         //printf("start again\n");
 
         while (1)
         {
@@ -595,13 +603,13 @@ void SJF()
                     current_process->waitingTime = current_process->startTime - current_process->stoppedTime;
                     printf("start %d stopped %d\n", current_process->startTime, current_process->stoppedTime);
                     current_process->state = "started";
-                    fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime);
+                    fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime,current_process->memory);
                 }
                 if (current_process->state == "stopped")
                 {
                     current_process->waitingTime = current_process->waitingTime + getClk() - current_process->stoppedTime;
                     current_process->state = "resumed";
-                    fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime);
+                    fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime,current_process->memory);
                 }
                 kill(current_process->pid, SIGCONT);
                 // count_Q++;
@@ -637,7 +645,7 @@ void SJF()
                 AvgWTA += WTA;
                 Avg_waiting += current_process->waitingTime;
                 // printf("thankyoo\n");
-                fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tTA\t%d\tWTA\t%f\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime, TA, WTA);
+                fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\tTA\t%d\tWTA\t%f\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime,current_process->memory, TA, WTA);
 
                 current_process = NULL;
                 printprioQueue();

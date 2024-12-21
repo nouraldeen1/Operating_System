@@ -16,13 +16,11 @@ int msgq_id, shmid;
 int main(int argc, char *argv[])
 {
     signal(SIGINT, clearResources);
-
     intialize_message_queue();
 
-    //intialize_shared_memory();
 
     // TODO Initialization
-
+    //make area for process
     int process_count = get_num_processes(argv[1]);
     struct process_input_data process[process_count];
     // // 1. Read the input files.
@@ -59,12 +57,12 @@ int main(int argc, char *argv[])
 
     else if (sch_id == 0)
     {
-        printf("run sch\n");
+        printf("run sch\n and algorithim is %s \n",algorithim_type_str);
         execl("scheduler.out", "./scheduler.out", algorithim_type_str, quantam_str, NULL);
     }
 
     // 4. Use this function after creating the clock process to initialize clock.
-    printf("inti clk process generator\n");
+    printf("init clk process generator\n");
     initClk();
 
 
@@ -79,9 +77,9 @@ int main(int argc, char *argv[])
         // To get time use this function.
         int x = getClk();
         
-        
         if (process[count].arrivalTime == x)
         {
+                printf("count is %d and total process are %d \n",count,process_count);
             send_val = msgsnd(msgq_id, &process[count], sizeof(struct process_input_data), IPC_NOWAIT);
             if (send_val == -1)
             {
@@ -182,6 +180,9 @@ void put_processes_in_PCB(struct process_input_data *pcb, int size, char *file)
             pcb[index].arrivalTime = output_file[1];
             pcb[index].runTime = output_file[2];
             pcb[index].priority = output_file[3];
+            pcb[index].mem = output_file[4];
+            printf("mem size %d \n",pcb[index].mem);
+
             index++;
         }
     }
@@ -190,7 +191,7 @@ void put_processes_in_PCB(struct process_input_data *pcb, int size, char *file)
 void process_string(const char *input_string, int *output_array)
 {
     int index = 0;
-    char number_str[20]; // Temporary buffer to store numbers as strings
+    char number_str[40]; // Temporary buffer to store numbers as strings
     int num_index = 0;
 
     // Loop through each character in the input string
