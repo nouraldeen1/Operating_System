@@ -21,11 +21,11 @@ int main(int argc, char *argv[])
 
     // TODO Initialization
     //make area for process
-    int process_count = get_num_processes(argv[1]);
+    int process_count = get_num_processes("processes.txt");
     struct process_input_data process[process_count];
     // // 1. Read the input files.
     // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
-    int algorithim_type = atoi(argv[3]);
+    int algorithim_type = atoi("1");
     int quantam = 0;
     if (algorithim_type == 3 || algorithim_type == 4)
     {

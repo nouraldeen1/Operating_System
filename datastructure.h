@@ -16,8 +16,10 @@ struct process_input_data
     int runTime;
     int priority;
     int mem;
+    int remainingTime;
+    int startTime;
     // int dum; noooooo
-    // int dum2;noooooooo
+    // int dum2;noooooooof
     //  int dum3;noooooooooo
 };
 /***************************
