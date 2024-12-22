@@ -1,5 +1,7 @@
 #include "headers.h"
 #include "datastructure.h"
+#include "memory.h"
+#include <math.h>
 
 int key_id, key_id2;
 int msgq_id, shmid;
@@ -26,8 +28,12 @@ float AvgWTA = 0;
 float Avg_waiting = 0;
 int current_level = 11;
 FILE *file;
+
+
+
 int main(int argc, char *argv[])
 {
+ 
     // printf("schedular id =%d\n",getpid());
     signal(SIGUSR1, handler);
     signal(SIGUSR2, increment_processes_terminated);
@@ -557,6 +563,10 @@ void multilevel(int Q)
 }
 void SJF()
 {
+    //initialize memory
+    memory mem;
+    initialize_memory(&mem, 1024);
+    
     int Finished_Process = -1;
     struct PCB *process = NULL;
     struct PCB *current_process = NULL;
@@ -581,7 +591,14 @@ void SJF()
 
             if (process == NULL)
                 break;
-            forking(process);
+
+            //-------------memory
+        
+            bool is_there_space;
+            is_there_space=allocate_memory(&mem, process->memory, process->id,getClk()); 
+            if(is_there_space)
+                forking(process);
+
         }
         if (pq_front != NULL || current_process != NULL)
         {
@@ -628,7 +645,12 @@ void SJF()
 
             if (current_process->remainingTime == 0)
             {
+
                 printf("process with id %d Finished  at time %d\n", current_process->id, getClk());
+                //-----------------------memory
+                
+                deallocate_memory(&mem,current_process->id,getClk());
+
                 current_process->state = "finished";
                 // count_Q = 0;
                 current_process->endTime = getClk();

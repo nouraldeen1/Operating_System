@@ -18,8 +18,8 @@ struct process_input_data
     int mem;
     int remainingTime;
     int startTime;
-    // int dum; noooooo
-    // int dum2;noooooooof
+     int dum; 
+    
     //  int dum3;noooooooooo
 };
 /***************************
@@ -51,32 +51,7 @@ struct PCB
 /***************************
  *                                   PCB Functions                             *
  * ***************************/
-// void setPCB(struct PCB *pcb, int id, int pid, int arrivalTime, int runTime, int priority, int waitingTime, int remainingTime, int startTime, int endTime, int stoppedTime){
-//     pcb->id = id;
-//     pcb->pid = pid;
-//     pcb->arrivalTime = arrivalTime;
-//     pcb->runTime = runTime;
-//     pcb->priority = priority;
-//     pcb->waitingTime = waitingTime;
-//     pcb->remainingTime = remainingTime;
-//     pcb->startTime = startTime;
-//     pcb->endTime = endTime;
-//     pcb->stoppedTime = stoppedTime;
-// }
 
-void setPCB(struct PCB *pcb, int id, int arrivalTime, int runTime, int priority, int waitingTime, int remainingTime, int startTime, int endTime, int stoppedTime,int memory)
-{
-    pcb->id = id;
-    pcb->arrivalTime = arrivalTime;
-    pcb->runTime = runTime;
-    pcb->priority = priority;
-    pcb->waitingTime = waitingTime;
-    pcb->remainingTime = remainingTime;
-    pcb->startTime = startTime;
-    pcb->endTime = endTime;
-    pcb->stoppedTime = stoppedTime;
-    pcb->memory=memory;
-}
 
 /***************************
  *                                  Queue                                    *

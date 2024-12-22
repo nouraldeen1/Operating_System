@@ -1,8 +1,0 @@
- At time 	2	process	1	started		arr	2	total	14	remain	14	wait	0	mem	151
- At time 	16	process	1	finished	arr	2	total	14	remain	0	wait	0	mem	151	TA	14	WTA	1.000000
- At time 	16	process	4	started		arr	9	total	23	remain	23	wait	7	mem	57
- At time 	39	process	4	finished	arr	9	total	23	remain	0	wait	7	mem	57	TA	30	WTA	1.304348
- At time 	39	process	2	started		arr	4	total	29	remain	29	wait	35	mem	227
- At time 	68	process	2	finished	arr	4	total	29	remain	0	wait	35	mem	227	TA	64	WTA	2.206897
- At time 	68	process	3	started		arr	5	total	29	remain	29	wait	63	mem	148
- At time 	97	process	3	finished	arr	5	total	29	remain	0	wait	63	mem	148	TA	92	WTA	3.172414
