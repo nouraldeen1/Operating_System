@@ -28,6 +28,8 @@ bool allocate_memory(memory *mem, int size, int id,int time) {
     int start_address = 0;
 
     while (current != NULL) {
+        if(size==0)
+            return true;
         if (!current->isused && current->size >= aligned_size) {
             start_address = current->start_address;
             while (current->size > aligned_size) {
@@ -42,7 +44,7 @@ bool allocate_memory(memory *mem, int size, int id,int time) {
 
             current->isused = true;
             current->id = id;
-            log_allocation(time, aligned_size, id, start_address, start_address + aligned_size - 1);
+            log_allocation(time, size, id, start_address, start_address + aligned_size - 1);
             return true;
         }
         current = current->next;
@@ -54,7 +56,7 @@ bool allocate_memory(memory *mem, int size, int id,int time) {
 
 // Function to log memory allocation to file
 void log_allocation(int time, int size, int id, int start, int end) {
-    log_file = fopen("memory.log", "a");  // Open the log file for writing
+    log_file = fopen("inputs_logs/memory.log", "a");  // Open the log file for writing
     if (log_file == NULL) {
         printf("Error opening log file.\n");
     }
@@ -102,7 +104,7 @@ bool deallocate_memory(memory *mem, int id,int time) {
 
 // Function to log memory deallocation to file
 void log_deallocation(int time, int size, int id, int start, int end) {
-    log_file = fopen("memory.log", "a");  // Open the log file for writing
+    log_file = fopen("inputs_logs/memory.log", "a");  // Open the log file for writing
     if (log_file == NULL) {
         printf("Error opening log file.\n");
     }

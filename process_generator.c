@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 
     // TODO Initialization
     //make area for process
-    int process_count = get_num_processes("processes.txt");
+    int process_count = get_num_processes("./inputs_logs/processes.txt");
     struct process_input_data process[process_count];
     // // 1. Read the input files.
     // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     else if (clk_id == 0)
     {
         printf("run clock\n");
-        execl("clk.out", "./clk.out", NULL);
+        execl("outs/clk.out", ".outs/clk.out", NULL);
     }
     sch_id = fork();
     if (sch_id == -1)
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     else if (sch_id == 0)
     {
         printf("run sch\n and algorithim is %s \n",algorithim_type_str);
-        execl("scheduler.out", "./scheduler.out", algorithim_type_str, quantam_str, NULL);
+        execl("outs/scheduler.out", "./outs/scheduler.out", algorithim_type_str, quantam_str, NULL);
     }
 
     // 4. Use this function after creating the clock process to initialize clock.

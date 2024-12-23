@@ -48,7 +48,7 @@ int main(int agrc, char *argv[])
 }
 void intialize_message_queue()
 {
-    key_id = ftok("pr_sch_file", 65);
+    key_id = ftok("/outs/pr_sch_file", 65);
     msgq_id = msgget(key_id, 0666 | IPC_CREAT);
 
     if (msgq_id == -1)
@@ -60,7 +60,7 @@ void intialize_message_queue()
 }
 void intialize_shared_memory()
 {
-  key_id2 = ftok("pr_sch_file", 63);
+  key_id2 = ftok("/outs/pr_sch_file", 63);
   shmid = shmget(key_id2, 4096, IPC_CREAT | 0666);
   if (shmid == -1)
   {

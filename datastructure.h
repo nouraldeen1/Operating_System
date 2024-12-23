@@ -2,70 +2,30 @@
 #define DATASTRUCTURE_H
 #include <stdio.h>
 #include <stdlib.h>
+#include "queue.h"
+#include "pcb.h"
 // typedef short bool;
 // #define true 1
 // #define false 0
 
-/***************************
- *                                   Process                                   *
- * ***************************/
-struct process_input_data
-{
-    int id;
-    int arrivalTime;
-    int runTime;
-    int priority;
-    int mem;
-    int remainingTime;
-    int startTime;
-     int dum; 
-    
-    //  int dum3;noooooooooo
-};
-/***************************
- *                                        PCB Table                             *
- ***************************/
-struct PCB
-{
-    int id;
-    int pid;
-    char*state;
-    int arrivalTime;
-    int runTime;
-    int priority;
-    int waitingTime;
-    int remainingTime;
-    int startTime;
-    int endTime;
-    int stoppedTime;
-    int memory;
-    // int start;
-    // int waitingst;
-    // int runningst;
-    //// int stoppedst;
 
-    // int startmem;
-    // int endmem;
-};
 
-/***************************
- *                                   PCB Functions                             *
- * ***************************/
 
 
 /***************************
  *                                  Queue                                    *
  * ***************************/
-typedef struct node
-{
-    struct PCB *pcb;
-    struct node *next;
-    // int priority;
-} Node;
+
 
 struct node *front = NULL;
 struct node *rear = NULL;
 struct node *current = NULL;
+typedef struct Queue
+{
+    struct node *front;
+    struct node *rear;
+    // int priority;
+} Queue;
 
 // insert node at the end of the list
 void Enqueue(struct PCB *data)
@@ -268,12 +228,7 @@ void removeNodeFromTheList(struct PCB *data)
 //*                                priority Queue Functions                      *
 //* ***************************/
 // Define a simple queue for PCBs
-typedef struct Queue
-{
-    struct node *front;
-    struct node *rear;
-    // int priority;
-} Queue;
+
 
 struct node *current_queue;
 typedef struct NodePriority

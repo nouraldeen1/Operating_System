@@ -1,5 +1,0 @@
-#id arrival runtime priority memory
-1	2	14	7	151
-2	4	29	7	227
-3	5	29	5	148
-4	9	23	3	57

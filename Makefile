@@ -1,20 +1,21 @@
 build:
-	gcc -g process_generator.c -o process_generator.out
-	gcc -g clk.c -o clk.out
-	gcc -g scheduler.c  memory.c  -o scheduler.out -lm
-	gcc -g process.c -o process.out
-	gcc -g test_generator.c -o test_generator.out
+	gcc -g process_generator.c -o outs/process_generator.out
+	gcc -g clk.c -o outs/clk.out
+	
+	gcc -g scheduler.c  memory.c queue.c -o outs/scheduler.out -lm
+	gcc -g process.c -o outs/process.out
+	gcc -g test_generator.c -o outs/test_generator.out
 
 
 
 clean:
-	rm -f *.out 
+	rm -f outs/*.out 
 
 all: clean build
 
 run:
-	./process_generator.out "processes.txt" -sch 1 -q 2
+	./outs/process_generator.out "inputs_logs/processes.txt" -sch 1 -q 2
 
 test:
-	./test_generator.out
+	./outs/test_generator.out
  

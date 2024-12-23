@@ -1,6 +1,8 @@
 #include "headers.h"
 #include "datastructure.h"
 #include "memory.h"
+#include "queue.h"
+#include "pcb.h"
 #include <math.h>
 
 int key_id, key_id2;
@@ -29,23 +31,31 @@ float Avg_waiting = 0;
 int current_level = 11;
 FILE *file;
 
+//memory mem;
 
 
 int main(int argc, char *argv[])
 {
  
+    file = fopen("inputs_logs/memory.log", "w");
+    if (file == NULL)
+    {
+        printf("Error opening file!\n");
+    }
+    fclose(file);
+
+    
     // printf("schedular id =%d\n",getpid());
     signal(SIGUSR1, handler);
     signal(SIGUSR2, increment_processes_terminated);
     intialize_message_queue();
     // intialize_shared_memory();
-    file = fopen("scheduler.log", "w");
+    file = fopen("inputs_logs/scheduler.log", "w");
     if (file == NULL)
     {
         printf("Error opening file!\n");
         return 1; // Exit if file cannot be opened
     }
-    fprintf(file, "#At time\tx\tprocess\ty\tstate\t\tarr\tw\ttotal\tz\tremain\ty\twait\tk\n");
     fclose(file);
     initClk();
     algorithm_type = atoi(argv[1]);
@@ -70,7 +80,7 @@ int main(int argc, char *argv[])
         HPF();
         printf("hpv \n");
 
-    file = fopen("scheduler.perf", "w");
+    file = fopen("outs/scheduler.perf", "w");
 
     // Check if file is successfully opened
     if (file == NULL)
@@ -155,6 +165,7 @@ struct PCB *generate_process()
 
     if (recieved == -1 || lastid == msgprocess.id)
     {
+
         //printf("Error in receiving schedular\n");
         return NULL;
     }
@@ -191,7 +202,7 @@ void round_robin(int Q)
     int pid, status;
     int count_Q = 0;
     int count_W = 0;
-    file = fopen("scheduler.log", "a");
+    file = fopen("/inputs_logs/scheduler.log", "a");
     if (file == NULL)
     {
         printf("Error opening file!\n");
@@ -346,7 +357,7 @@ void forking(struct PCB *process)
             int remainingtime = (process->remainingTime);
             char remainingtime_str[10];
             tostring(remainingtime_str, remainingtime);
-            execl("process.out", "./process.out", remainingtime_str, NULL);
+            execl("outs/process.out", "./outs/process.out", remainingtime_str, NULL);
         }
         else
         {
@@ -399,7 +410,7 @@ void multilevel(int Q)
     int pid, status;
     int count_Q = 0;
     int count_empty_levels = 0;
-    file = fopen("scheduler.log", "a");
+    file = fopen("inputs_logs/scheduler.log", "a");
     if (file == NULL)
     {
         printf("Error opening file!\n");
@@ -565,8 +576,10 @@ void SJF()
 {
     //initialize memory
     memory mem;
+    Queue_final* waiting_queue=createQueue_final();
+    PCB* waiting_process=NULL;
+
     initialize_memory(&mem, 1024);
-    
     int Finished_Process = -1;
     struct PCB *process = NULL;
     struct PCB *current_process = NULL;
@@ -575,7 +588,7 @@ void SJF()
     int pid, status;
     // int count_Q = 0;
 
-    file = fopen("scheduler.log", "w");
+    file = fopen("inputs_logs/scheduler.log", "a");
     if (file == NULL)
     {
         printf("Error opening file!\n");
@@ -588,18 +601,23 @@ void SJF()
         while (1)
         {
             process = generate_process();
-
+          
+               
             if (process == NULL)
                 break;
 
             //-------------memory
         
-            bool is_there_space;
-            is_there_space=allocate_memory(&mem, process->memory, process->id,getClk()); 
-            if(is_there_space)
+    
+            if(allocate_memory(&mem, process->memory, process->id,getClk()))
                 forking(process);
-
+            else{
+                enQueue_final(waiting_queue,current_process);
+                continue;
+            }
+               
         }
+
         if (pq_front != NULL || current_process != NULL)
         {
             if (current_process == NULL)
@@ -635,11 +653,16 @@ void SJF()
                 while (obj == getClk())
                 {
           
-   
-                    process = generate_process();
+                    if (allocate_memory(&mem, process->memory, process->id, getClk())) {
+                        forking(process);
+                    } else {
+                        printf("Process %d waiting for memory at time %d\n", process->id, getClk());
+                        enQueue_final(waiting_queue, process);
+                    }
+
 
                   
-                    forking(process);
+                   
                 }
             }
 
@@ -648,9 +671,16 @@ void SJF()
 
                 printf("process with id %d Finished  at time %d\n", current_process->id, getClk());
                 //-----------------------memory
-                
-                deallocate_memory(&mem,current_process->id,getClk());
-
+                if (!isEmpty(waiting_queue)) {
+                PCB* next_process = frontQueue_final(waiting_queue);
+                if (allocate_memory(&mem, next_process->memory, next_process->id, getClk())) {
+                    deQueue_final(waiting_queue);
+                    printf("Process %d allocated memory from waiting queue at time %d\n", next_process->id, getClk());
+                    forking(next_process);  // Or handle this process
+                }
+            }
+             
+               
                 current_process->state = "finished";
                 // count_Q = 0;
                 current_process->endTime = getClk();
@@ -700,7 +730,7 @@ void HPF()
     int pid, status;
     // int current_id = 0;
     //  int count_Q = 0;
-    file = fopen("scheduler.log", "a");
+    file = fopen("inputs_logs/scheduler.log", "a");
     if (file == NULL)
     {
         printf("Error opening file!\n");
