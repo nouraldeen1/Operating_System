@@ -31,12 +31,16 @@ float Avg_waiting = 0;
 int current_level = 11;
 FILE *file;
 
-//memory mem;
-
+memory mem;
+Queue_final *waiting_queue;
+PCB *waiting_process = NULL;
+void fork_allocate(PCB *process);
+void delocation_forking(PCB *current_process);
 
 int main(int argc, char *argv[])
 {
- 
+    initialize_memory(&mem, 1024);
+    waiting_queue = createQueue_final();
     file = fopen("inputs_logs/memory.log", "w");
     if (file == NULL)
     {
@@ -44,7 +48,6 @@ int main(int argc, char *argv[])
     }
     fclose(file);
 
-    
     // printf("schedular id =%d\n",getpid());
     signal(SIGUSR1, handler);
     signal(SIGUSR2, increment_processes_terminated);
@@ -56,15 +59,14 @@ int main(int argc, char *argv[])
         printf("Error opening file!\n");
         return 1; // Exit if file cannot be opened
     }
-    fclose(file);
     initClk();
     algorithm_type = atoi(argv[1]);
     int Quantum = atoi(argv[2]);
     time = 1;
     if (algorithm_type == 3)
     {
-        round_robin(Quantum);
         printf("round_robin \n");
+        round_robin(Quantum);
     }
     else if (algorithm_type == 4)
     {
@@ -77,8 +79,10 @@ int main(int argc, char *argv[])
         SJF();
     }
     else
+    {
+        printf("hpf \n");
         HPF();
-        printf("hpv \n");
+    }
 
     file = fopen("outs/scheduler.perf", "w");
 
@@ -108,7 +112,7 @@ int main(int argc, char *argv[])
 }
 void intialize_message_queue()
 {
-    key_id = ftok("pr_sch_file", 65);
+    key_id = ftok("outs/pr_sch_file", 65);
     msgq_id = msgget(key_id, 0666 | IPC_CREAT);
 
     if (msgq_id == -1)
@@ -120,7 +124,7 @@ void intialize_message_queue()
 }
 void intialize_shared_memory()
 {
-    key_id2 = ftok("pr_sch_file", 63);
+    key_id2 = ftok("outs/pr_sch_file", 63);
     shmid = shmget(key_id2, 4096, IPC_CREAT | 0666);
     if (shmid == -1)
     {
@@ -166,7 +170,7 @@ struct PCB *generate_process()
     if (recieved == -1 || lastid == msgprocess.id)
     {
 
-        //printf("Error in receiving schedular\n");
+        // printf("Error in receiving schedular\n");
         return NULL;
     }
     else
@@ -182,11 +186,13 @@ struct PCB *generate_process()
         newpcb->remainingTime = msgprocess.runTime;
         newpcb->endTime = -1;
         newpcb->startTime = -1;
-        newpcb->stoppedTime = -1;
+        newpcb->stoppedTime = getClk();
+        printf("stoooooooooooop %d\n", newpcb->stoppedTime);
+
         newpcb->state = "";
-        newpcb->memory=msgprocess.mem;
+        newpcb->memory = msgprocess.mem;
         // printing the process data at getclk()
-        printf("at time %d process %d arrives with arrival %d memeory %d \n", getClk(), newpcb->id, newpcb->arrivalTime,newpcb->memory);
+        printf("at time %d process %d arrives with arrival %d memeory %d \n", getClk(), newpcb->id, newpcb->arrivalTime, newpcb->memory);
         // int obj=getClk();
         // while(obj==getClk());
         return newpcb;
@@ -202,7 +208,7 @@ void round_robin(int Q)
     int pid, status;
     int count_Q = 0;
     int count_W = 0;
-    file = fopen("/inputs_logs/scheduler.log", "a");
+    file = fopen("inputs_logs/scheduler.log", "a");
     if (file == NULL)
     {
         printf("Error opening file!\n");
@@ -215,11 +221,10 @@ void round_robin(int Q)
         while (1)
         {
             process = generate_process();
-            // printf("process id %p at time %d\n", process, getClk());
-            // printf("process id %p at time %d\n", process, getClk());
+
             if (process == NULL)
                 break;
-            forking(process);
+            fork_allocate(process);
         }
         if (count_Q == Q)
         {
@@ -269,6 +274,8 @@ void round_robin(int Q)
                 int obj = getClk();
                 while (obj == getClk())
                 {
+                    process = generate_process();
+                    fork_allocate(process);
                 }
                 if (current_process->remainingTime != 0)
                     kill(current_process->pid, SIGSTOP);
@@ -276,7 +283,9 @@ void round_robin(int Q)
 
             if (current_process->remainingTime == 0)
             {
-                printf("process with id %d Finished  at time %d\n", current_process->id, getClk());
+                //--------------------memory
+                delocation_forking(current_process);
+
                 current_process->state = "finished";
                 count_Q = 0;
                 current_process->endTime = getClk();
@@ -293,9 +302,8 @@ void round_robin(int Q)
                 AvgWTA += WTA;
                 Avg_waiting += current_process->waitingTime;
                 fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tTA\t%d\tWTA\t%f\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime, TA, WTA);
-               
+
                 current_process = NULL;
-              
             }
 
             // printList();
@@ -305,7 +313,7 @@ void round_robin(int Q)
 
             if (time != getClk() && getClk() != 0 && (Finished_Process != process_count || !finished))
             {
-                
+
                 time = getClk();
                 waiting_time_utili++;
             }
@@ -366,12 +374,12 @@ void forking(struct PCB *process)
             printf("process id %d is forked with process id %d\n", process->id, process->pid);
             if (algorithm_type == 3)
             {
-                process->stoppedTime = getClk();
+                // process->stoppedTime = getClk();
                 Enqueue(process);
             }
             else if (algorithm_type == 4)
             {
-                process->stoppedTime = getClk();
+                // process->stoppedTime = getClk();
                 enqueue(process, process->priority);
                 if (current_level > process->priority)
                 {
@@ -381,18 +389,15 @@ void forking(struct PCB *process)
             }
             else if (algorithm_type == 1)
             {
-                process->stoppedTime = getClk();
+                // process->stoppedTime = getClk();
 
                 enqueueprio(process, process->remainingTime);
-             
             }
             else
             {
-                process->stoppedTime = getClk();
+                // process->stoppedTime = getClk();
 
-              
                 enqueueprio(process, process->priority);
-    
             }
 
             kill(pid, SIGSTOP);
@@ -419,29 +424,32 @@ void multilevel(int Q)
     intializeQueue();
     while (Finished_Process != process_count || !finished || processes_terminated != process_count)
     {
-     
+
         while (1)
         {
             process = generate_process();
-          
+
             if (process == NULL)
                 break;
-            forking(process);
+            fork_allocate(process);
         }
         count_empty_levels = 0;
         for (int i = 0; i <= 10; i++)
         {
+
+
             current_level = i;
             while (prio[i].queue->front != NULL || current_process != NULL)
             {
+                                            
 
                 while (1)
                 {
                     process = generate_process();
-                   
+
                     if (process == NULL)
                         break;
-                    forking(process);
+                    fork_allocate(process);
                 }
                 if (i > current_level && count_Q == 0)
                 {
@@ -501,13 +509,13 @@ void multilevel(int Q)
                         current_process->waitingTime = current_process->waitingTime + getClk() - current_process->stoppedTime;
                         current_process->startTime = getClk();
                         current_process->state = "started";
-                        fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime,current_process->memory);
+                        fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime, current_process->memory);
                     }
                     else if (count_Q == 0 && current_process->startTime != -1)
                     {
                         current_process->waitingTime = current_process->waitingTime + getClk() - current_process->stoppedTime;
                         current_process->state = "resumed";
-                        fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime,current_process->memory);
+                        fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime, current_process->memory);
                     }
                     kill(current_process->pid, SIGCONT);
                     // printf("i arrivied at level %d \n", i);
@@ -517,13 +525,16 @@ void multilevel(int Q)
 
                     while (obj == getClk())
                     {
+                        process = generate_process();
+                        fork_allocate(process);
                     }
                 }
 
                 if (current_process->remainingTime == 0)
                 {
 
-                    printf("process with id %d Finished  at time %d\n", current_process->id, getClk());
+                    //--------------------memory
+                    delocation_forking(current_process);
 
                     count_Q = 0;
                     current_process->state = "finished";
@@ -541,30 +552,36 @@ void multilevel(int Q)
                     AvgWTA += WTA;
                     Avg_waiting += current_process->waitingTime;
                     printf("hi");
-                    fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\tTA\t%d\tWTA\t%f\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime,current_process->memory, TA, WTA);
+                    fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\tTA\t%d\tWTA\t%f\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime, current_process->memory, TA, WTA);
                     current_process = NULL;
                     if (i > current_level)
                     {
-                        printf("break\n");
-                        i = current_level - 1;
+                        printf("xbreak\n");
+                        if(current_level!=0)
+                            i = current_level - 1;
+                        printf("hi %d",current_level);
                         current_level = 11;
+                        
                         break;
                     }
-                   
                 }
                 if (current_process != NULL)
                     kill(current_process->pid, SIGSTOP);
+
             }
+
             if (prio[i].queue->front == NULL && current_process == NULL)
             {
                 count_empty_levels++;
             }
+
+            
         }
         if (count_empty_levels == 11)
         {
             if (time != getClk() && getClk() != 0 && (Finished_Process != process_count || !finished))
             {
-               
+
                 time = getClk();
                 waiting_time_utili++;
             }
@@ -574,12 +591,8 @@ void multilevel(int Q)
 }
 void SJF()
 {
-    //initialize memory
-    memory mem;
-    Queue_final* waiting_queue=createQueue_final();
-    PCB* waiting_process=NULL;
-
-    initialize_memory(&mem, 1024);
+    // initialize memory
+    PCB *waiting_process = NULL;
     int Finished_Process = -1;
     struct PCB *process = NULL;
     struct PCB *current_process = NULL;
@@ -594,28 +607,18 @@ void SJF()
         printf("Error opening file!\n");
         return; // Exit if file cannot be opened
     }
+
     while (Finished_Process != process_count || !finished || processes_terminated != process_count)
     {
-         //printf("start again\n");
+        // printf("start again\n");
 
         while (1)
         {
             process = generate_process();
-          
-               
+
             if (process == NULL)
                 break;
-
-            //-------------memory
-        
-    
-            if(allocate_memory(&mem, process->memory, process->id,getClk()))
-                forking(process);
-            else{
-                enQueue_final(waiting_queue,current_process);
-                continue;
-            }
-               
+            fork_allocate(process);
         }
 
         if (pq_front != NULL || current_process != NULL)
@@ -638,13 +641,13 @@ void SJF()
                     current_process->waitingTime = current_process->startTime - current_process->stoppedTime;
                     printf("start %d stopped %d\n", current_process->startTime, current_process->stoppedTime);
                     current_process->state = "started";
-                    fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime,current_process->memory);
+                    fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime, current_process->memory);
                 }
                 if (current_process->state == "stopped")
                 {
                     current_process->waitingTime = current_process->waitingTime + getClk() - current_process->stoppedTime;
                     current_process->state = "resumed";
-                    fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime,current_process->memory);
+                    fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime, current_process->memory);
                 }
                 kill(current_process->pid, SIGCONT);
                 // count_Q++;
@@ -652,35 +655,16 @@ void SJF()
                 int obj = getClk();
                 while (obj == getClk())
                 {
-          
-                    if (allocate_memory(&mem, process->memory, process->id, getClk())) {
-                        forking(process);
-                    } else {
-                        printf("Process %d waiting for memory at time %d\n", process->id, getClk());
-                        enQueue_final(waiting_queue, process);
-                    }
-
-
-                  
-                   
+                    process = generate_process();
+                    fork_allocate(process);
                 }
             }
 
             if (current_process->remainingTime == 0)
             {
+                // memory
+                delocation_forking(current_process);
 
-                printf("process with id %d Finished  at time %d\n", current_process->id, getClk());
-                //-----------------------memory
-                if (!isEmpty(waiting_queue)) {
-                PCB* next_process = frontQueue_final(waiting_queue);
-                if (allocate_memory(&mem, next_process->memory, next_process->id, getClk())) {
-                    deQueue_final(waiting_queue);
-                    printf("Process %d allocated memory from waiting queue at time %d\n", next_process->id, getClk());
-                    forking(next_process);  // Or handle this process
-                }
-            }
-             
-               
                 current_process->state = "finished";
                 // count_Q = 0;
                 current_process->endTime = getClk();
@@ -697,15 +681,10 @@ void SJF()
                 AvgWTA += WTA;
                 Avg_waiting += current_process->waitingTime;
                 // printf("thankyoo\n");
-                fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\tTA\t%d\tWTA\t%f\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime,current_process->memory, TA, WTA);
+                fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tmem\t%d\tTA\t%d\tWTA\t%f\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime, current_process->memory, TA, WTA);
 
                 current_process = NULL;
                 printprioQueue();
-              
-            }
-            if (current_process != NULL)
-            {
-                kill(current_process->pid, SIGSTOP);
             }
         }
         if (pq_front == NULL && current_process == NULL)
@@ -743,18 +722,18 @@ void HPF()
         while (1)
         {
             process = generate_process();
-  
- 
+
             if (process == NULL)
                 break;
-            forking(process);
+            fork_allocate(process);
         }
 
-     
         if (current_process != NULL && pq_front != NULL)
         {
+
             if (current_process->priority > pq_front->pcb->priority)
             {
+                kill(current_process->pid, SIGSTOP);
                 current_process->stoppedTime = getClk();
                 current_process->state = "stopped";
                 fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime);
@@ -797,13 +776,15 @@ void HPF()
                 while (obj == getClk())
                 {
                     process = generate_process();
-                    forking(process);
+                    fork_allocate(process);
                 }
             }
             printf("busyyyyyyyyy\n");
             if (current_process->remainingTime == 0)
             {
-                printf("process with id %d Finished  at time %d\n", current_process->id, getClk());
+                //--------------------memory
+                delocation_forking(current_process);
+
                 current_process->state = "finished";
                 //                 // count_Q = 0;
                 current_process->endTime = getClk();
@@ -823,8 +804,7 @@ void HPF()
                 fprintf(file, " At time \t%d\tprocess\t%d\t%s\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\tTA\t%d\tWTA\t%f\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime, TA, WTA);
                 current_process = NULL;
             }
-            if (current_process != NULL)
-                kill(current_process->pid, SIGSTOP);
+
             printprioQueue();
         }
         if (pq_front == NULL && current_process == NULL)
@@ -838,4 +818,41 @@ void HPF()
         }
     }
     fclose(file);
+}
+void fork_allocate(PCB *process)
+{
+    if (process != NULL)
+    {
+        //     forking(process);
+        if (allocate_memory(&mem, process->memory, process->id, getClk()) == true)
+        {
+            forking(process);
+            printQueue_final(waiting_queue);
+            print_memory(&mem);
+        }
+        else
+        {
+            printQueue_final(waiting_queue);
+            enQueue_final(waiting_queue, process);
+            printQueue_final(waiting_queue);
+        }
+    }
+}
+
+void delocation_forking(PCB *current_process)
+{
+    printf("process with id %d Finished  at time %d\n", current_process->id, getClk());
+    printQueue_final(waiting_queue);
+    deallocate_memory(&mem, current_process->id, getClk());
+    //-----------------------memory
+    if (!isEmpty(waiting_queue))
+    {
+        PCB *next_process = frontQueue_final(waiting_queue);
+        if (allocate_memory(&mem, next_process->memory, next_process->id, getClk()))
+        {
+            next_process = deQueue_final(waiting_queue);
+            printf("Process %d allocated memory from waiting queue at time %d\n", next_process->id, getClk());
+            forking(next_process); // Or handle this process
+        }
+    }
 }

@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     struct process_input_data process[process_count];
     // // 1. Read the input files.
     // 2. Read the chosen scheduling algorithm and its parameters, if there are any from the argument list.
-    int algorithim_type = atoi("1");
+    int algorithim_type = atoi(argv[3]);
     int quantam = 0;
     if (algorithim_type == 3 || algorithim_type == 4)
     {
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     else if (clk_id == 0)
     {
         printf("run clock\n");
-        execl("outs/clk.out", ".outs/clk.out", NULL);
+        execl("outs/clk.out", "./outs/clk.out", NULL);
     }
     sch_id = fork();
     if (sch_id == -1)
@@ -240,7 +240,7 @@ void tostring(char str[], int num)
 void intialize_message_queue()
 {
    // printf("heloooooooooooooooo\n");
-    key_id = ftok("pr_sch_file", 65);
+    key_id = ftok("outs/pr_sch_file", 65);
     msgq_id = msgget(key_id, 0666 | IPC_CREAT);
     //printf("heloooooooooooooooo\n");
     if (msgq_id == -1)
@@ -252,7 +252,7 @@ void intialize_message_queue()
 }
 void intialize_shared_memory()
 {
-    key_id2 = ftok("pr_sch_file", 63);
+    key_id2 = ftok("outs/pr_sch_file", 63);
     shmid = shmget(key_id2, 4096, IPC_CREAT | 0666);
     if (shmid == -1)
     {

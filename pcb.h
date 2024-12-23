@@ -24,7 +24,8 @@ struct process_input_data
     int mem;
     int remainingTime;
     int startTime;
-    int dum; 
+    //int dum; 
+    
     
 };
 
