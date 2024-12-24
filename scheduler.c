@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
     // printf("go away\n");
     //  TODO: implement the scheduler.
     //  TODO: upon termination release the clock resources.
+    cleanup_memory(&mem);
     kill(getppid(), SIGINT);
     printf("destory me\n");
     destroyClk(true);
@@ -228,6 +229,7 @@ void round_robin(int Q)
         }
         if (count_Q == Q)
         {
+            kill(current_process->pid, SIGSTOP);
             printf("quantum is done\n");
             count_Q = 0;
 
@@ -237,7 +239,9 @@ void round_robin(int Q)
 
             fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime);
             Enqueue(current_process);
+
             current_process = NULL;
+
             printList();
         }
         if (front != NULL || current_process != NULL)
@@ -258,17 +262,16 @@ void round_robin(int Q)
                     current_process->startTime = getClk();
                     current_process->waitingTime = current_process->waitingTime + getClk() - current_process->stoppedTime;
                     current_process->state = "started";
+                    kill(current_process->pid, SIGCONT);
                     fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime);
                 }
                 else if (count_Q == 0 && current_process->startTime != -1)
                 {
                     current_process->waitingTime = current_process->waitingTime + getClk() - current_process->stoppedTime;
                     current_process->state = "resumed";
+                    kill(current_process->pid, SIGCONT);
                     fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime);
                 }
-
-                kill(current_process->pid, SIGCONT);
-
                 count_Q++;
                 current_process->remainingTime--;
                 int obj = getClk();
@@ -277,8 +280,6 @@ void round_robin(int Q)
                     process = generate_process();
                     fork_allocate(process);
                 }
-                if (current_process->remainingTime != 0)
-                    kill(current_process->pid, SIGSTOP);
             }
 
             if (current_process->remainingTime == 0)
@@ -437,11 +438,9 @@ void multilevel(int Q)
         for (int i = 0; i <= 10; i++)
         {
 
-
             current_level = i;
             while (prio[i].queue->front != NULL || current_process != NULL)
             {
-                                            
 
                 while (1)
                 {
@@ -454,14 +453,21 @@ void multilevel(int Q)
                 if (i > current_level && count_Q == 0)
                 {
                     printf("break\n");
-                    i = current_level - 1;
+                    if (current_level != 0)
+                    {
+                        i = current_level - 1;
+                    }
+                    else
+                    {
+                        i = 10;
+                    }
                     printf("level mow %d\n", i);
                     current_level = 11;
                     break;
                 }
                 if (count_Q == Q)
                 {
-
+                    kill(current_process->pid, SIGSTOP);
                     count_Q = 0;
                     current_process->state = "stopped";
                     fprintf(file, " At time \t%d\tprocess\t%d\t%s\t\tarr\t%d\ttotal\t%d\tremain\t%d\twait\t%d\n", getClk(), current_process->id, current_process->state, current_process->arrivalTime, current_process->runTime, current_process->remainingTime, current_process->waitingTime);
@@ -481,7 +487,14 @@ void multilevel(int Q)
                     if (i > current_level)
                     {
                         printf("break\n");
-                        i = current_level - 1;
+                        if (current_level != 0)
+                        {
+                            i = current_level - 1;
+                        }
+                        else
+                        {
+                            i = 10;
+                        }
                         printf("level mow %d\n", i);
                         current_level = 11;
                         break;
@@ -557,25 +570,27 @@ void multilevel(int Q)
                     if (i > current_level)
                     {
                         printf("xbreak\n");
-                        if(current_level!=0)
+                        printf("hi %d\n", current_level);
+                        if (current_level != 0)
+                        {
                             i = current_level - 1;
-                        printf("hi %d",current_level);
+                        }
+                        else
+                        {
+                            i = 10;
+                        }
                         current_level = 11;
-                        
                         break;
                     }
                 }
-                if (current_process != NULL)
-                    kill(current_process->pid, SIGSTOP);
-
+                // if (current_process != NULL)
+                //     kill(current_process->pid, SIGSTOP);
             }
 
             if (prio[i].queue->front == NULL && current_process == NULL)
             {
                 count_empty_levels++;
             }
-
-            
         }
         if (count_empty_levels == 11)
         {

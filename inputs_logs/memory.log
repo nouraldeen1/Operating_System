@@ -2,5 +2,15 @@ At time 4 allocated 250 bytes for process 1 from 0 to 255
 At time 6 allocated 251 bytes for process 2 from 256 to 511
 At time 8 allocated 252 bytes for process 3 from 512 to 767
 At time 12 allocated 253 bytes for process 4 from 768 to 1023
-At time 34 freed 256 bytes from process 4 from 768 to 1023
-At time 34 allocated 254 bytes for process 5 from 768 to 1023
+At time 33 freed 256 bytes from process 4 from 768 to 1023
+At time 33 allocated 254 bytes for process 5 from 768 to 1023
+At time 49 freed 256 bytes from process 3 from 512 to 767
+At time 49 allocated 255 bytes for process 6 from 512 to 767
+At time 53 freed 256 bytes from process 1 from 0 to 255
+At time 53 allocated 200 bytes for process 7 from 0 to 255
+At time 64 freed 256 bytes from process 5 from 768 to 1023
+At time 64 allocated 201 bytes for process 8 from 768 to 1023
+At time 68 freed 256 bytes from process 8 from 768 to 1023
+At time 70 freed 256 bytes from process 7 from 0 to 255
+At time 72 freed 256 bytes from process 6 from 512 to 767
+At time 85 freed 256 bytes from process 2 from 256 to 511

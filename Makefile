@@ -14,7 +14,7 @@ clean:
 all: clean build
 
 run:
-	./outs/process_generator.out "inputs_logs/processes.txt" -sch 4 -q 3
+	./outs/process_generator.out "inputs_logs/processes.txt" -sch 4 -q 1
 
 test:
 	./outs/test_generator.out

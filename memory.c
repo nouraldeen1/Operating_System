@@ -41,7 +41,7 @@ bool allocate_memory(memory *mem, int size, int id,int time) {
                 current->size /= 2;
                 buddy->start_address = current->start_address + current->size;
             }
-
+            
             current->isused = true;
             current->id = id;
             log_allocation(time, size, id, start_address, start_address + aligned_size - 1);
