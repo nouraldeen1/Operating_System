@@ -83,7 +83,7 @@ void merge_s(memory *mem) {
 }
 
 // Function to deallocate memory
-bool deallocate_memory(memory *mem, int id,int time) {
+bool deallocate_memory(memory *mem, int id,int time,int size) {
     block *current = mem->front;
 
     while (current != NULL) {
@@ -91,7 +91,7 @@ bool deallocate_memory(memory *mem, int id,int time) {
             int start_address = current->start_address;
             int end_address = start_address + current->size - 1;
             current->isused = false;
-            log_deallocation(time, current->size, id, start_address, end_address);
+            log_deallocation(time,  size, id, start_address, end_address);
             merge_s(mem);
             return true;
         }

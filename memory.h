@@ -19,7 +19,7 @@ typedef struct block {
 } block;
 void initialize_memory(memory *mem, int total_size);
 bool allocate_memory(memory *mem, int size, int id,int time);
-bool deallocate_memory(memory *mem, int id,int time);
+bool deallocate_memory(memory *mem, int id,int time,int size);
 void print_memory(memory *mem);
 void cleanup_memory(memory *mem);
 int nearest_power_of_2(int size);
