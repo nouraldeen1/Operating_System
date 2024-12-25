@@ -71,9 +71,11 @@ void merge_s(memory *mem) {
     while (current != NULL) {
         if (!current->isused) {
             // Calculate the buddy's address
-            int buddy_address = (current->start_address % (2 * current->size) == 0)
-                                    ? current->start_address + current->size
-                                    : current->start_address - current->size;
+            int buddy_address;
+            if(current->start_address % (2 * current->size) == 0)
+            buddy_address=current->start_address + current->size;
+            else
+              buddy_address= current->start_address - current->size;
 
             // Find the buddy block
             block *buddy = mem->front;
