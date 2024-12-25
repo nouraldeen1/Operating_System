@@ -859,6 +859,7 @@ void delocation_forking(PCB *current_process)
     printf("process with id %d Finished  at time %d\n", current_process->id, getClk());
     printQueue_final(waiting_queue);
     deallocate_memory(&mem, current_process->id, getClk(),current_process->memory);
+    print_memory(&mem);
     //-----------------------memory
     if (!isEmpty(waiting_queue))
     {

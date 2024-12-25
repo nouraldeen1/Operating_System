@@ -68,19 +68,48 @@ void log_allocation(int time, int size, int id, int start, int end) {
 void merge_s(memory *mem) {
     block *current = mem->front;
 
-    while (current != NULL && current->next != NULL) {
-        block *next_ = current->next;
+    while (current != NULL) {
+        if (!current->isused) {
+            // Calculate the buddy's address
+            int buddy_address = (current->start_address % (2 * current->size) == 0)
+                                    ? current->start_address + current->size
+                                    : current->start_address - current->size;
 
-        if (!current->isused && !next_->isused && current->size == next_->size) {
-            current->size *= 2;
-            current->next = next_->next;
-            free(next_);
-            current = mem->front;
-        } else {
-            current = current->next;
+            // Find the buddy block
+            block *buddy = mem->front;
+            block *prev = NULL; // Keep track of the previous block
+            while (buddy != NULL) {
+                if (buddy->start_address == buddy_address && buddy->size == current->size) {
+                    break;
+                }
+                prev = buddy;
+                buddy = buddy->next;
+            }
+
+            // Merge with buddy if conditions are met
+            if (buddy != NULL && !buddy->isused && buddy->size == current->size) {
+                if (current->start_address < buddy->start_address) {
+                    // Current is the lower block
+                    current->size *= 2;
+                    current->next = buddy->next;
+                    free(buddy);
+                } else {
+                    // Buddy is the lower block
+                    buddy->size *= 2;
+                    buddy->next = current->next;
+                    if (prev != NULL) {
+                        prev->next = buddy;
+                    }
+                    free(current);
+                    current = buddy;
+                }
+                continue; // Restart from the current block to check for further merges
+            }
         }
+        current = current->next; // Move to the next block
     }
 }
+
 
 // Function to deallocate memory
 bool deallocate_memory(memory *mem, int id,int time,int size) {
